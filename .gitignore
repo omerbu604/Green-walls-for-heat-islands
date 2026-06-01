@@ -1,0 +1,20 @@
+# Private / sensitive data layers — never push to GitHub
+data/private/
+
+# Common data formats to keep local if needed
+# *.shp
+# *.gpkg
+# *.geojson
+
+# Python
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
