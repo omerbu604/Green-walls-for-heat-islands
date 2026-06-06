@@ -1,10 +1,15 @@
 # Private / sensitive data layers — never push to GitHub
 data/private/
 
+# Raw full-country OSM shapefiles (too large for GitHub — use clipped GeoJSON versions instead)
+Layers/osm/*.shp
+Layers/osm/*.dbf
+Layers/osm/*.shx
+Layers/osm/*.cpg
+Layers/osm/*.prj
+
 # Common data formats to keep local if needed
-# *.shp
 # *.gpkg
-# *.geojson
 
 # Python
 __pycache__/
