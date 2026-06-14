@@ -1,0 +1,14 @@
+geopandas
+rasterio
+rasterstats
+xgboost
+scikit-learn
+streamlit
+folium
+streamlit-folium
+branca
+matplotlib
+numpy
+pandas
+joblib
+shapely
