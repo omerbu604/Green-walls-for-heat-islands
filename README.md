@@ -2,6 +2,10 @@
 
 Detect urban heat hotspots and rank buildings for **green wall** intervention using satellite imagery and spatial analysis.
 
+🗺️ **[Live interactive map](https://green-walls-for-heat-islands-tlv.streamlit.app/)** | **[GitHub repo](https://github.com/omerbu604/Green-walls-for-heat-islands)**
+
+> **Proof of concept** built as part of the GeoAI course at Arena. The pipeline demonstrates that spatial AI can prioritize green infrastructure at city scale — it does not account for all real-world parameters (wall materials, irrigation, plant species, legal constraints, microclimate effects).
+
 ---
 
 ## Problem
@@ -40,7 +44,7 @@ eligible_wall_area = building_perimeter × building_height × coverage_ratio
 green_wall_score = heat_priority_nearby
                  × eligible_wall_area
                  × sun_exposure_score      # wall orientation + shade obstruction
-                 × exp(-distance / 50)     # distance decay to nearest hot cell
+                 × exp(-distance / 300)    # distance decay to nearest hot cell
                  × predicted_lst_impact    # model-predicted temperature reduction
 ```
 
