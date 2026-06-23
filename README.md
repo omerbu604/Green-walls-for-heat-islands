@@ -41,7 +41,7 @@ Every part of the pipeline is inherently spatial:
 |---|---|---|---|
 | Land Surface Temperature (LST) | Landsat 8 + 9 Collection 2 L2 via GEE | GeoTIFF | 30 m · 12-month median & P90 |
 | NDVI | Sentinel-2 SR Harmonised via GEE | GeoTIFF | 10 m · single cloud-free scene |
-| Building footprints + heights | Tel Aviv municipality open data | GeoJSON (EPSG:2039) | **25,818 polygons** |
+| Building footprints + heights | Google Earth Engine dataset (global open buildings with heights) | GeoJSON (EPSG:2039) | **25,818 polygons**, heights 2–270 m |
 | Municipal boundary | Tel Aviv open data | GeoJSON (EPSG:4326) | 1 polygon |
 | Road network | OpenStreetMap (Geofabrik) | Shapefile → GeoJSON | **2,572 road segments** (primary / secondary / tertiary / trunk / motorway) |
 | Water bodies | OpenStreetMap (Geofabrik) | Shapefile → GeoJSON | **94 polygons** (sea coast, Yarkon river, ponds) |
@@ -71,7 +71,12 @@ Every part of the pipeline is inherently spatial:
 | `dist_major_road` | `gpd.sjoin_nearest` — centroid to nearest major road segment |
 | `dist_to_water` | `gpd.sjoin_nearest` — centroid to nearest water body |
 
-**Spatial join rule:** always `how="left"` so every grid cell is retained even if no buildings overlap.  
+**Joining (`join`):** raster→grid via `zonal_stats`; building footprints→grid via `gpd.overlay`; nearest road/water via `gpd.sjoin_nearest`. Spatial joins always use `how="left"` so every grid cell is retained even if no buildings overlap.
+
+**Encoding:** all model features are numeric / continuous (temperatures, distances, ratios, counts), so **no categorical encoding (one-hot / label) was required**. The only categorical handling in the pipeline is upstream filtering of the OSM road `fclass` attribute to the five major road types (primary, secondary, tertiary, trunk, motorway).
+
+**Cleaning:** invalid coastal cells (`mean_LST = 0`, the GEE nodata artefact) removed; cells missing NDVI/LST dropped before modelling.
+
 **CRS rule:** all distance and area operations in EPSG:2039; reprojected to EPSG:4326 only for visualisation and raster sampling.
 
 ---
@@ -83,17 +88,19 @@ Every part of the pipeline is inherently spatial:
 **Target (y):** `mean_LST` per 100 × 100 m grid cell  
 **Features (X):** `mean_NDVI`, `pct_green`, `pct_built`, `mean_building_height`, `building_density`, `dist_major_road`, `dist_to_water`
 
-Three models compared on an 80/20 train–test split:
+Three models compared on an 80/20 train–test split (`random_state=42`, 5,080 cells):
 
 | Model | R² (full features) | R² (morphology only — no NDVI) |
 |---|---|---|
-| Linear Regression | 0.24 | 0.08 |
-| Random Forest | 0.38 | 0.19 |
-| **XGBoost** | **0.41** | **0.21** |
+| Linear Regression | 0.08 | 0.08 |
+| Random Forest | 0.37 | **0.26** |
+| **XGBoost** | **0.41** | 0.21 |
 
 Two versions were trained intentionally:
-- **Full model (with NDVI):** NDVI is the strongest predictor (~35% importance) — vegetation is the dominant cooling mechanism
-- **Morphology-only model (without NDVI):** isolates the contribution of urban structure (built-up %, road proximity) to heat independently of current vegetation
+- **Full model (with NDVI):** XGBoost performs best (R² = 0.41). NDVI is the strongest single predictor (~35% importance) — vegetation is the dominant cooling mechanism. This model is used for the scenario simulation.
+- **Morphology-only model (without NDVI):** isolates the contribution of urban structure (built-up %, road proximity, distance to water) to heat independently of current vegetation. Here Random Forest generalises best (R² = 0.26), showing urban form alone explains a meaningful share of the heat signal.
+
+The weak Linear Regression fit (R² = 0.08) confirms the LST–morphology relationship is strongly **non-linear** — tree-based models are required.
 
 ### Scenario Simulation
 
